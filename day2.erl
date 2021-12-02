@@ -49,7 +49,7 @@ safe_atom(List) ->
 	end.
 
 -ifdef(EUNIT).
--include("navigation_data.hrl").
+-include("day2.hrl").
 
 empty_test() ->
     {0,0} = calc_location([]).

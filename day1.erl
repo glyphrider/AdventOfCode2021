@@ -31,7 +31,7 @@ load_sonar_data({ok,Data},IoDevice,MP,NavigationData) ->
         load_sonar_data(file:read_line(IoDevice),IoDevice,MP,[list_to_integer(Depth)|NavigationData]).
 
 -ifdef(EUNIT).
--include("sonar_data.hrl").
+-include("day1.hrl").
 
 no_data_test() ->
     0 = count_increases([]).
