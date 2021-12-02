@@ -1,6 +1,6 @@
--module(sonardepth).
+-module(day1).
 
--export([aoc1a/0,aoc1b/0]).
+-export([day1/0,day1b/0]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -8,10 +8,10 @@
 
 -define(SONAR_DATA_FILE,"day1.txt").
 
-aoc1a() ->
+day1() ->
     io:format("sonar depth increases -> ~p~n",[count_increases(load_sonar_data(?SONAR_DATA_FILE))]).
 
-aoc1b() ->
+day1b() ->
     io:format("sonar depth increases of sums -> ~p~n",[count_increases(lists:map(fun({A,B,C}) -> A + B + C end,gentuples:gentriples(load_sonar_data(?SONAR_DATA_FILE))))]).
 
 count_increases(ListOfSonarDepths) ->

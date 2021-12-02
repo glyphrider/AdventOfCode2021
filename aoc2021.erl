@@ -3,13 +3,13 @@
 -export([day1/0,day1b/0,day2/0,day2b/0]).
 
 day1() ->
-	sonardepth:aoc1a().
+	day1:day1().
 
 day1b() ->
-	sonardepth:aoc1b().
+	day1:day1b().
 
 day2() ->
-	navigation:aoc2a().
+	day2:day2().
 
 day2b() ->
-	navigation:aoc2b().
+	day2:day2b().

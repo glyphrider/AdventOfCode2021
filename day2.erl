@@ -1,6 +1,6 @@
--module(navigation).
+-module(day2).
 
--export([aoc2a/0,aoc2b/0]).
+-export([day2/0,day2b/0]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -8,12 +8,12 @@
 
 -define(NAVIGATION_DATA_FILE,"day2.txt").
 
-aoc2a() ->
+day2() ->
     {X,Y} = calc_location(load_navigation_data(?NAVIGATION_DATA_FILE)),
     io:format("resultant position -> ~p ~p~n",[X,Y]),
     io:format("horizontal * depth == ~p~n",[X*Y]).
 
-aoc2b() ->
+day2b() ->
     {X,Y,_Aim} = calc_location2(load_navigation_data(?NAVIGATION_DATA_FILE)),
     io:format("resultant position -> ~p ~p~n",[X,Y]),
     io:format("horizontal * depth == ~p~n",[X*Y]).
