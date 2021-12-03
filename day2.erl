@@ -45,10 +45,12 @@ load_navigation_data({ok,Data},IoDevice,MP,NavigationData) ->
 	load_navigation_data(file:read_line(IoDevice),IoDevice,MP,[{safe_atom(Direction),list_to_integer(Magnitude)}|NavigationData]).
 
 safe_atom(List) ->
-	case list_to_existing_atom(List) of
-		badarg -> list_to_atom(List);
-		Atom -> Atom
-	end.
+    safe_atom(List,list_to_existing_atom(List)).
+
+safe_atom(List,badarg) ->
+    list_to_atom(List);
+safe_atom(_List,Atom) ->
+    Atom.
 
 -ifdef(EUNIT).
 -include("day2.hrl").
