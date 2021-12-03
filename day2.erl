@@ -11,12 +11,14 @@
 day2() ->
     {X,Y} = calc_location(load_navigation_data(?NAVIGATION_DATA_FILE)),
     io:format("resultant position -> ~p ~p~n",[X,Y]),
-    io:format("horizontal * depth == ~p~n",[X*Y]).
+    io:format("horizontal * depth == ~p~n",[X*Y]),
+    X*Y.
 
 day2b() ->
     {X,Y,_Aim} = calc_location2(load_navigation_data(?NAVIGATION_DATA_FILE)),
     io:format("resultant position -> ~p ~p~n",[X,Y]),
-    io:format("horizontal * depth == ~p~n",[X*Y]).
+    io:format("horizontal * depth == ~p~n",[X*Y]),
+    X*Y.
 
 calc_location(MovementList) ->
 lists:foldl(fun({forward,N},{X,Y}) ->

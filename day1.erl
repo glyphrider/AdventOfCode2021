@@ -9,10 +9,14 @@
 -define(SONAR_DATA_FILE,"day1.txt").
 
 day1() ->
-    io:format("sonar depth increases -> ~p~n",[count_increases(load_sonar_data(?SONAR_DATA_FILE))]).
+    Result = count_increases(load_sonar_data(?SONAR_DATA_FILE)),
+    io:format("sonar depth increases -> ~p~n",[Result]),
+    Result.
 
 day1b() ->
-    io:format("sonar depth increases of sums -> ~p~n",[count_increases(lists:map(fun({A,B,C}) -> A + B + C end,gentuples:gentriples(load_sonar_data(?SONAR_DATA_FILE))))]).
+    Result = count_increases(lists:map(fun({A,B,C}) -> A + B + C end,gentuples:gentriples(load_sonar_data(?SONAR_DATA_FILE)))),
+    io:format("sonar depth increases of sums -> ~p~n",[Result]),
+    Result.
 
 count_increases(ListOfSonarDepths) ->
     lists:foldl(fun({A, B},Increase) when B > A -> Increase + 1;
