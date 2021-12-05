@@ -9,32 +9,33 @@
 -define(BINARY_DATA_FILE_NAME,"day3.txt").
 
 gamma(L) ->
-    Half = length(L) / 2,
-    [FirstElement | _ ] = L,
-    Length = length(FirstElement),
-
     lists:map(
-      fun(Count) when Count > Half ->
-	      1;
-	 (_Count) ->
-	      0
+      fun({Zero,One}) when Zero > One ->
+	      0;
+	 (_) ->
+	      1
       end,
       lists:foldl(
 	fun(E,A) ->
 		lists:zipwith(
-		  fun(D,AD) ->
-			  D+AD
+		  fun(0,{Zero,One}) ->
+			  {Zero+1,One};
+		     (1,{Zero,One}) ->
+			  {Zero,One+1}
 		  end,E,A)
-	end, zero_list(Length), L)).
+	end, zero_list(L),L)).
 
-zero_list(Length) ->
-    zero_list(Length,[]).
+zero_list(ReferenceList) ->
+    zero_list(lists:foldl(fun(E,A) -> max(length(E),A) end,0,ReferenceList),[]).
 
 zero_list(0,List) ->
     List;
 zero_list(Length,List) ->
-    zero_list(Length-1,[0|List]).
+    zero_list(Length-1,[{0,0}|List]).
 
+% since we never calculate epsilon without gamma,
+% and because it's just a binary inversion,
+% we cheat a little and just flip the bits.
 epsilon(Gamma) ->
     lists:map(
       fun(0) ->
@@ -44,10 +45,11 @@ epsilon(Gamma) ->
       end,Gamma).
 
 convert_binary(L) ->
-    {B,_} = lists:foldr(fun(D,{A,M}) ->
-				{A+D*M,M*2}
-			end,{0,1},L),
-    B.
+    convert_binary(lists:reverse(L),0,1).
+convert_binary([],Result,_Multiplier) ->
+    Result;
+convert_binary([Digit|Digits],Result,Multiplier) ->
+    convert_binary(Digits,Result+Digit*Multiplier,Multiplier*2).
 
 load_binary_data(Filename) ->
     {ok,IoDevice} = file:open(Filename,read),
