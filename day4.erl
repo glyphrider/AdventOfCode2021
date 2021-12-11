@@ -4,7 +4,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([day4/0,day4b/0,runboard/6]).
+-export([day4/0,day4b/0,runboard/5]).
 
 -define(BINGO_DATA_FILE_NAME,"day4.txt").
 
@@ -37,7 +37,7 @@ load_bingo_data({ok,_BlankLine},IoDevice,Pids) ->
     {ok,Line3} = file:read_line(IoDevice),
     {ok,Line4} = file:read_line(IoDevice),
     {ok,Line5} = file:read_line(IoDevice),
-    Pid = spawn(day4,runboard,[Line1,Line2,Line3,Line4,Line5,self()]),
+    Pid = spawn(day4,runboard,[Line1,Line2,Line3,Line4,Line5]),
     io:format("spawned board ~p ~p~n",[length(Pids),Pid]),
     load_bingo_data(file:read_line(IoDevice),IoDevice,[Pid|Pids]).
 
@@ -54,7 +54,7 @@ parse_line(String) ->
 		 end,{[],unknown},String),
     lists:reverse(Line).
 
-parse_board(Line1,Line2,Line3,Line4,Line5,Parent) ->
+parse_board(Line1,Line2,Line3,Line4,Line5) ->
     Wins = lists:map(fun(E) -> parse_line(E) end,[Line1,Line2,Line3,Line4,Line5]),
     BoardValue = lists:foldl(
 		   fun(Line,Sum) ->
@@ -62,21 +62,21 @@ parse_board(Line1,Line2,Line3,Line4,Line5,Parent) ->
     VWins = lists:map(fun(E) -> lists:reverse(E) end,lists:foldl(fun(Line,VWins) ->
 									 put_line_into_vwins(Line,VWins,[])
 								 end,[[],[],[],[],[]],Wins)),
-    {board,BoardValue,Wins ++ VWins,Parent}.
+    {board,BoardValue,Wins ++ VWins}.
 
 put_line_into_vwins([],[],VWins) ->
     lists:reverse(VWins);
 put_line_into_vwins([Elem|Line],[VWin|VWins],Result) ->
     put_line_into_vwins(Line,VWins,[[Elem|VWin]|Result]).
 
-runboard(Line1,Line2,Line3,Line4,Line5,Parent) ->
+runboard(Line1,Line2,Line3,Line4,Line5) ->
 						% setup board
 						% parse lines
 						% ten ways to win
 						% board value
 						% number of moves
-    BoardState = parse_board(Line1,Line2,Line3,Line4,Line5,Parent),
-    {board,BoardValue,_,_} = BoardState,
+    BoardState = parse_board(Line1,Line2,Line3,Line4,Line5),
+    {board,BoardValue,_} = BoardState,
     io:format("spawned board ~p with a value of ~p~n",[self(),BoardValue]),
     runboard(BoardState).
 
@@ -85,11 +85,11 @@ runboard(BoardState) ->
 	die ->
 	    %% io:format("board ~p lost.~n",[self()]),
 	    ok;
-	N ->
-	    marknumber(BoardState,N)
+	{N,Controller} ->
+	    marknumber(BoardState,N,Controller)
     end.
 
-marknumber({board,BoardValue,Wins,Parent},N) ->
+marknumber({board,BoardValue,Wins},N,Controller) ->
     {MarkedValues,NewWins,N} = lists:foldl(
 			       fun(WinLine,{MarkedTotal,NewWins,Marker}) ->
 				       {LineTotal,NewLine,Marker} =lists:foldl(fun(InnerMarker,{MarkedValue,Win,InnerMarker}) ->
@@ -99,24 +99,24 @@ marknumber({board,BoardValue,Wins,Parent},N) ->
 									end,{0,[],Marker},WinLine),
 				       {MarkedTotal+LineTotal,[NewLine|NewWins],Marker}
 			       end,{0,[],N},Wins),
-    checkwin({board,BoardValue-MarkedValues/2,NewWins,Parent},N,MarkedValues/2).
+    checkwin({board,BoardValue-MarkedValues/2,NewWins},N,MarkedValues/2,Controller).
 
-checkwin({board,_,_,Parent}=Board,_N,0) ->
+checkwin({board,_,_}=Board,_N,0,Controller) ->
     %% io:format("  pid ~p scores no marks~n",[self()]),
-    erlang:send(Parent,{ack,self()}),
+    erlang:send(Controller,{ack,self()}),
     runboard(Board);
-checkwin({board,BoardValue,_,Parent},N,true) ->
+checkwin({board,BoardValue,_},N,true,Controller) ->
     io:format("  pid ~p declaring a win ~p * ~p = ~p~n",[self(),N,BoardValue,N*BoardValue]),
-    erlang:send(Parent,{win,N*BoardValue,self()});
-checkwin({board,_,_,Parent}=Board,_N,false) ->
+    erlang:send(Controller,{win,N*BoardValue,self()});
+checkwin({board,_,_}=Board,_N,false,Controller) ->
     %% io:format("  pid ~p marks ~p~n",[self(),N]),
-    erlang:send(Parent,{ack,self()}),
+    erlang:send(Controller,{ack,self()}),
     runboard(Board);
-checkwin({board,_BoardValue,Wins,_Parent}=BoardState,N,_MarkedValue) ->
+checkwin({board,_BoardValue,Wins}=BoardState,N,_MarkedValue,Controller) ->
     DidWin = lists:any(fun(Win) ->
 		      lists:all(fun(Square) -> Square == x end,Win)
 	      end,Wins),
-    checkwin(BoardState,N,DidWin).
+    checkwin(BoardState,N,DidWin,Controller).
 
 run_game([],Pids,_Aggressive) ->
     io:format("No winners, but ~p board remain.~n",[length(Pids)]),
@@ -128,7 +128,7 @@ run_game(_CallList,[],_Aggressive) ->
 run_game([Call|CallList],Pids,true) ->
     io:format("Posting call ~p~n",[Call]),
     lists:foreach(fun(Pid) ->
-			  erlang:send(Pid,Call)
+			  erlang:send(Pid,{Call,self()})
 		  end,Pids),
     io:format("Waiting for results from call ~p~n",[Call]),
     case get_results(Pids) of
@@ -144,7 +144,7 @@ run_game([Call|CallList],Pids,true) ->
 run_game([Call|CallList],Pids,false) ->
     io:format("Posting call ~p (trying to lose)",[Call]),
     lists:foreach(fun(Pid) ->
-			  erlang:send(Pid,Call)
+			  erlang:send(Pid,{Call,self()})
 		  end,Pids),
     io:format("Watiing for results from call ~p (trying to lose)~n",[Call]),
     case get_results(Pids) of
@@ -174,7 +174,7 @@ get_results(Pids,Winners) ->
 	    get_results(lists:filter(fun(Keeper) ->
 					     Keeper /= Pid
 				     end,Pids),[Pid|Winners])
-    end.
+        end.
     
 -ifdef(EUNIT).
 
@@ -200,8 +200,7 @@ parse_board_test() ->
       [2,7,12,17,22],
       [3,8,13,18,23],
       [4,9,14,19,24],
-      [5,10,15,20,25]],
-     mypid
-    } = parse_board(" 1  2  3  4  5\n"," 6  7  8  9 10\n","11 12 13 14 15\n","16 17 18 19 20\n","21 22 23 24 25\n",mypid).
+      [5,10,15,20,25]]
+    } = parse_board(" 1  2  3  4  5\n"," 6  7  8  9 10\n","11 12 13 14 15\n","16 17 18 19 20\n","21 22 23 24 25\n").
 
 -endif.
